@@ -1,4 +1,4 @@
-ProjectGitHub
-=============
+TDA367
+======
 
-Proj
+Repo for a school project in object-oriented programming

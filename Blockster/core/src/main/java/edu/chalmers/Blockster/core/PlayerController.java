@@ -4,23 +4,26 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.maps.MapLayers;
+import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
 import com.badlogic.gdx.math.Vector2;
 
 public class PlayerController {
 	private Player player;
-	private MapLayers mapLayers;
-	private float maximumMovmentSpeed = 700, gravity = 2000 ;
+	private TiledMapTileLayer collisionLayer;
+	private float maximumMovmentSpeed = 700, gravity = 2000;
 	private Sprite PlayerImg = new Sprite(new Texture("Player/still2.png"));
+	private boolean collisionX, collisionY;
 
-	public PlayerController(MapLayers mapLayers){
+
+	public PlayerController(TiledMapTileLayer collisionLayer){
 		player = new Player(PlayerImg);
-		this.mapLayers = mapLayers;
+		this.collisionLayer = collisionLayer;
 		
 		/**
 		 * Set the startposition for the player.
 		 */
-		player.setX(100);
-		player.setY(900);
+		player.setX(600);
+		player.setY(1500);
 		
 	}
 	
@@ -46,9 +49,97 @@ public class PlayerController {
 			//player.setVelocityY(gravity * delta);
 		}
 	
+		//Store the just resent position
+		float oldX = player.getX(), oldY = player.getY(), 
+				tileWidth = collisionLayer.getTileWidth(), tileHeigth = collisionLayer.getTileHeight();;
+		
+		/**
+		 * ******Collision handler******
+		 */
+				
+		//Move player in X-direction
 		player.setX((player.getX() + playerVelocity.x * delta));
+		
+		/**
+		 * Player moving to the left
+		 */
+		if(playerVelocity.x < 0){
+			System.out.println("Left");
+			// checking the tile to the left and above the player
+			collisionX = collisionLayer.getCell((int)(player.getX() / tileWidth), (int)((player.getY() + player.getHeight()) / tileHeigth))
+					.getTile().getProperties().containsKey("Collision");
+			
+			// checking the tile to the left of the player
+			if(!collisionX)
+			collisionX = collisionLayer.getCell((int)(player.getX() / tileWidth), (int)((player.getY() + player.getHeight()) / 2 / tileHeigth))
+					.getTile().getProperties().containsKey("Collision");
+			
+			// checking the tile to the left and under the player
+			if(!collisionX)		
+					collisionX = collisionLayer.getCell((int)(player.getX() / tileWidth), (int)(player.getY() / tileHeigth))
+					.getTile().getProperties().containsKey("Collision");
+			
+		/**
+		 *  Player moving to the right
+		 */
+		}else if(playerVelocity.x > 0){
+			System.out.println("Right");
+			// checking the tile to the right and ABOVE the player
+			collisionX = collisionLayer.getCell((int)((player.getX() + player.getWidth()) / tileWidth), (int)((player.getY() + player.getHeight()) / tileHeigth))
+					.getTile().getProperties().containsKey("Collision");
+			
+			// checking the tile to the right of the player
+			if(!collisionX)
+				collisionX = collisionLayer.getCell((int)((player.getX() + player.getWidth()) / tileWidth), (int)((player.getY() + player.getWidth()) / 2 / tileHeigth))
+					.getTile().getProperties().containsKey("Collision");
+			
+			// checking the tile to the right and UNDER the player
+			if(!collisionX)
+				collisionX = collisionLayer.getCell((int)((player.getX() + player.getWidth()) / tileWidth), (int)(player.getY() / tileHeigth))
+					.getTile().getProperties().containsKey("Collision");
+		}
+		
+		/**
+		 * Deal with potentially collisions on X-axis
+		 */
+		if(collisionX){
+			player.setX(oldX);
+			player.setVelocityX(0);
+		}
+		
+		//Move player in Y-direction
 		player.setY((player.getY() + playerVelocity.y * delta));
 		
+		/**
+		 * Player falling
+		 */
+		if(playerVelocity.y < 0){
+			System.out.println("Falling");
+			
+			// checking tile to the left and under player
+			collisionY = collisionLayer.getCell((int)(player.getX() / tileWidth), (int)(player.getY() / tileHeigth))
+					.getTile().getProperties().containsKey("Collision");
+			
+			// checking tile under player
+			if(!collisionY)
+				collisionY = collisionLayer.getCell((int)((player.getX() + player.getWidth()) / 2 / tileWidth), (int)(player.getY() / tileHeigth))
+					.getTile().getProperties().containsKey("Collision");
+			
+			//checking to the right and under the player
+			if(!collisionY)
+				collisionY = collisionLayer.getCell((int)((player.getX() + player.getWidth()) / tileWidth), (int)(player.getY() / tileHeigth))
+				.getTile().getProperties().containsKey("Collision");
+			
+		}
+		
+		/**
+		 * Deal with potentially collisions in Y-axis
+		 */
+		
+		if(collisionY){
+			player.setY(oldY);
+			player.setVelocityY(0);
+		}
 	}
 	public Player getPlayer(){
 		return player;
